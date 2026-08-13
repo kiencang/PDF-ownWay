@@ -1,0 +1,5 @@
+name = "pdf-ownway"
+compatibility_date = "2026-08-13"
+
+[assets]
+directory = "./dist/browser"
