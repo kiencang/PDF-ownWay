@@ -22,7 +22,7 @@ import { LucideAngularModule, Key, X, ExternalLink, EyeOff, Eye, Trash2 } from '
         </div>
         <div class="p-6">
           <p class="text-slate-500 text-sm mb-4 leading-relaxed">
-            Để sử dụng công cụ dịch file PDF này, bạn cần khóa API Key của Meta AI (Model API Key) và điền mã Model AI bạn muốn sử dụng.
+            Để sử dụng công cụ dịch file PDF này, bạn cần khóa API Key của Meta AI (Model API Key) và điền mã Model AI bạn muốn sử dụng. Chỉ dùng ứng dụng này trên máy tính cá nhân của bạn.
           </p>
 
           <div class="flex items-center justify-between gap-2 text-sm mt-3 bg-slate-50/50 px-3 py-2 rounded-xl border border-slate-100">
@@ -41,7 +41,7 @@ import { LucideAngularModule, Key, X, ExternalLink, EyeOff, Eye, Trash2 } from '
             <div>
               <label for="meta-custom-model" class="text-xs uppercase text-slate-500 font-bold tracking-wider block mb-2">MÔ HÌNH META AI (MODEL ID)</label>
               <p class="text-xs text-slate-500 mb-2 leading-relaxed">
-                Hãy copy chính xác mã model AI của Meta mà bạn muốn dùng và nhập vào đây. Một số model có giá rất rẻ, nhưng lưu ý là đổi lại Meta sẽ dùng dữ liệu của bạn trao đổi với AI để cải tiến sản phẩm.
+                Hãy copy chính xác mã model AI của Meta mà bạn muốn dùng và nhập vào đây.
               </p>
               <input 
                 id="meta-custom-model"
@@ -73,7 +73,7 @@ import { LucideAngularModule, Key, X, ExternalLink, EyeOff, Eye, Trash2 } from '
               </div>
             </div>
             <p class="text-[11px] text-slate-500 mt-2 italic leading-relaxed">
-              Khóa API và cấu hình Model của bạn được lưu <strong class="text-slate-700 font-semibold">cục bộ tuyệt đối</strong> trong trình duyệt (<code class="font-mono text-[10px] bg-slate-100 px-1 py-0.5 rounded text-indigo-600">LocalStorage</code>).
+              Khóa API của bạn được lưu cục bộ trong trình duyệt (<code class="font-mono text-[10px] bg-slate-100 px-1 py-0.5 rounded text-indigo-600">LocalStorage</code>) bạn đang dùng.
             </p>
           </div>
         </div>
