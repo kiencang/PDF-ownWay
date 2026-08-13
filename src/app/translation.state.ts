@@ -477,7 +477,8 @@ export class TranslationState {
     this.selectedFile.set(null);
     this.isLoadedFromHistory.set(false);
     this.activeHistoryItemId.set(null);
-    this.selectedModel.set('muse-spark-1.2');
+    const savedModel = (typeof localStorage !== 'undefined' && localStorage.getItem('sila_pdf_translator_custom_model')) || 'muse-spark-1.2';
+    this.selectedModel.set(savedModel);
     this.fileBase64.set(null);
     this.rawOriginalFileBlob.set(null);
     this.mimeType.set('');
@@ -533,7 +534,8 @@ export class TranslationState {
     if (doc.model) {
       this.selectedModel.set(doc.model);
     } else {
-      this.selectedModel.set('muse-spark-1.2');
+      const savedModel = (typeof localStorage !== 'undefined' && localStorage.getItem('sila_pdf_translator_custom_model')) || 'muse-spark-1.2';
+      this.selectedModel.set(savedModel);
     }
     
     this.tokenCount.set(0);
