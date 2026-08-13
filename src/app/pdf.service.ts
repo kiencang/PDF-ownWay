@@ -63,9 +63,9 @@ export class PdfService {
     let imgCount = 0;
 
     const validObjectTypes = [
-      (pdfjsLib as any).OPS?.paintImageXObject,
-      (pdfjsLib as any).OPS?.paintInlineImageXObject,
-      (pdfjsLib as any).OPS?.paintImageXObjectRepeat
+      (pdfjsLib as unknown as Record<string, Record<string, unknown>>)['OPS'] && (pdfjsLib as unknown as Record<string, Record<string, unknown>>)['OPS']['paintImageXObject'],
+      (pdfjsLib as unknown as Record<string, Record<string, unknown>>)['OPS'] && (pdfjsLib as unknown as Record<string, Record<string, unknown>>)['OPS']['paintInlineImageXObject'],
+      (pdfjsLib as unknown as Record<string, Record<string, unknown>>)['OPS'] && (pdfjsLib as unknown as Record<string, Record<string, unknown>>)['OPS']['paintImageXObjectRepeat']
     ].filter(v => v !== undefined);
 
     for (let pageNum = 1; pageNum <= pdf.numPages; pageNum++) {
@@ -80,9 +80,9 @@ export class PdfService {
             const imgName = operatorList.argsArray[i][0];
             
             try {
-              let imgData: any = null;
+              let imgData: Record<string, unknown> | null = null;
               
-              const fetchObjectWithTimeout = (targetObjs: any, name: string, timeoutMs: number = 5000): Promise<any> => {
+              const fetchObjectWithTimeout = (targetObjs: Record<string, unknown>, name: string, timeoutMs = 5000): Promise<Record<string, unknown> | null> => {
                 return new Promise((resolve) => {
                   let isResolved = false;
                   const timeoutId = setTimeout(() => {
@@ -94,11 +94,11 @@ export class PdfService {
                   }, timeoutMs);
 
                   try {
-                    targetObjs.get(name, (obj: unknown) => {
+                    (targetObjs as Record<string, CallableFunction>)['get'](name, (obj: unknown) => {
                       if (!isResolved) {
                         clearTimeout(timeoutId);
                         isResolved = true;
-                        resolve(obj);
+                        resolve(obj as Record<string, unknown> | null);
                       }
                     });
                   } catch (err) {
@@ -113,19 +113,22 @@ export class PdfService {
               };
               
               if (typeof imgName === 'object' && imgName !== null) {
-                imgData = imgName;
+                imgData = imgName as Record<string, unknown>;
               } else if (typeof imgName === 'string') {
-                if ((page as any).objs && typeof (page as any).objs.get === 'function') {
-                  imgData = await fetchObjectWithTimeout((page as any).objs, imgName);
-                } else if ((page as any).commonObjs && typeof (page as any).commonObjs.get === 'function') {
-                  imgData = await fetchObjectWithTimeout((page as any).commonObjs, imgName);
+                const pageObjs = (page as unknown as Record<string, unknown>)['objs'] as Record<string, unknown> | undefined;
+                const pageCommonObjs = (page as unknown as Record<string, unknown>)['commonObjs'] as Record<string, unknown> | undefined;
+                
+                if (pageObjs && typeof pageObjs['get'] === 'function') {
+                  imgData = await fetchObjectWithTimeout(pageObjs, imgName);
+                } else if (pageCommonObjs && typeof pageCommonObjs['get'] === 'function') {
+                  imgData = await fetchObjectWithTimeout(pageCommonObjs, imgName);
                 }
               }
 
               if (!imgData) continue;
 
-              const width = imgData.width;
-              const height = imgData.height;
+              const width = imgData['width'] as number;
+              const height = imgData['height'] as number;
 
               if (!width || !height) continue;
               if (width < 100 || height < 100) continue;
@@ -137,9 +140,9 @@ export class PdfService {
 
               if (!ctx) continue;
 
-              if (imgData.data) {
+              if (imgData['data']) {
                 const imgImageData = ctx.createImageData(width, height);
-                const srcData = imgData.data;
+                const srcData = imgData['data'] as Uint8Array | Uint8ClampedArray;
                 const destData = imgImageData.data;
 
                 if (srcData.length === width * height * 3) {
@@ -165,15 +168,16 @@ export class PdfService {
                   }
                 } else {
                   try {
-                    destData.set(srcData.subarray(0, destData.length));
+                    const srcDataArray = new Uint8ClampedArray(srcData);
+                    destData.set(srcDataArray.subarray(0, destData.length));
                   } catch {
                     continue;
                   }
                 }
 
                 ctx.putImageData(imgImageData, 0, 0);
-              } else if (imgData.bitmap) {
-                ctx.drawImage(imgData.bitmap, 0, 0);
+              } else if ((imgData as Record<string, unknown>)['bitmap']) {
+                ctx.drawImage((imgData as Record<string, unknown>)['bitmap'] as CanvasImageSource, 0, 0);
               } else {
                 continue;
               }

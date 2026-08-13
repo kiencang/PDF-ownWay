@@ -22,7 +22,7 @@ export class TranslationState {
   private promptService = inject(PromptService);
   private imageProcessorService = inject(ImageProcessorService);
 
-  private lastTranslationUsageMetadata: any = null;
+  private lastTranslationUsageMetadata: Record<string, unknown> | null | undefined = null;
 
   readonly MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
   readonly MAX_FILE_SIZE_HTML = 0.5 * 1024 * 1024; // 500KB
@@ -199,7 +199,7 @@ export class TranslationState {
     this.rawOriginalFileBlob.set(file);
   }
 
-  private async checkTokenLimit(data: string, mimeType: string = 'text/plain', pageCount: number = 1) {
+  private async checkTokenLimit(data: string, mimeType = 'text/plain', pageCount = 1) {
     this.isCountingTokens.set(true);
     try {
       const tokens = await this.aiService.countTokens(data, mimeType, this.selectedModel(), pageCount);
@@ -272,7 +272,7 @@ export class TranslationState {
           this.loadPrompt('zero_math_prompt.md')
         ]);
         const result = await this.aiService.translate(base64, mime, prompt, instruction, this.selectedModel(), extractedImages);
-        this.lastTranslationUsageMetadata = result.usageMetadata;
+        this.lastTranslationUsageMetadata = result.usageMetadata as Record<string, unknown> | null | undefined;
         const rawHtml = this.imageProcessorService.extractHtml(result.text);
         this.resultHtml.set(this.imageProcessorService.postProcessHtml(rawHtml, extractedImages));
       }
@@ -283,7 +283,7 @@ export class TranslationState {
           this.loadPrompt('zero_svg_prompt.md')
         ]);
         const result = await this.aiService.translate(base64, mime, prompt, instruction, this.selectedModel(), extractedImages);
-        this.lastTranslationUsageMetadata = result.usageMetadata;
+        this.lastTranslationUsageMetadata = result.usageMetadata as Record<string, unknown> | null | undefined;
         const rawHtml = this.imageProcessorService.extractHtml(result.text);
         this.resultHtml.set(this.imageProcessorService.postProcessHtml(rawHtml, extractedImages));
       }
@@ -294,7 +294,7 @@ export class TranslationState {
           this.loadPrompt('math_prompt.md')
         ]);
         const result = await this.aiService.translate(base64, mime, prompt, instruction, this.selectedModel(), extractedImages);
-        this.lastTranslationUsageMetadata = result.usageMetadata;
+        this.lastTranslationUsageMetadata = result.usageMetadata as Record<string, unknown> | null | undefined;
         const rawHtml = this.imageProcessorService.extractHtml(result.text);
         this.resultHtml.set(this.imageProcessorService.postProcessHtml(rawHtml, extractedImages));
       }
@@ -305,7 +305,7 @@ export class TranslationState {
           this.loadPrompt('phase_1_prompt.md')
         ]);
         const result = await this.aiService.translate(base64, mime, prompt, instruction, this.selectedModel(), extractedImages);
-        this.lastTranslationUsageMetadata = result.usageMetadata;
+        this.lastTranslationUsageMetadata = result.usageMetadata as Record<string, unknown> | null | undefined;
         const rawHtml = this.imageProcessorService.extractHtml(result.text);
         this.resultHtml.set(this.imageProcessorService.postProcessHtml(rawHtml, extractedImages));
       }
@@ -322,7 +322,7 @@ export class TranslationState {
         
         const htmlContent = base64;
         const result = await this.aiService.translateHtml(htmlContent, prompt, instruction, this.selectedModel(), this.htmlExtractedImages());
-        this.lastTranslationUsageMetadata = result.usageMetadata;
+        this.lastTranslationUsageMetadata = result.usageMetadata as Record<string, unknown> | null | undefined;
         const rawHtml = this.imageProcessorService.extractHtml(result.text);
         this.resultHtml.set(this.imageProcessorService.postProcessHtml(rawHtml, this.htmlExtractedImages()));
       }
@@ -399,14 +399,14 @@ export class TranslationState {
         pdfHash: this.pdfHash() || undefined,
         originalFileBlob: fileBlobToSave,
         originalFileMimeType: this.mimeType() || undefined,
-        promptTokens: this.lastTranslationUsageMetadata?.promptTokenCount || 
-                      this.lastTranslationUsageMetadata?.prompt_tokens || 
-                      this.lastTranslationUsageMetadata?.input_tokens || 
-                      this.lastTranslationUsageMetadata?.inputTokens,
-        candidatesTokens: this.lastTranslationUsageMetadata?.candidatesTokenCount || 
-                          this.lastTranslationUsageMetadata?.completion_tokens || 
-                          this.lastTranslationUsageMetadata?.output_tokens || 
-                          this.lastTranslationUsageMetadata?.outputTokens
+        promptTokens: (this.lastTranslationUsageMetadata?.['promptTokenCount'] || 
+                       this.lastTranslationUsageMetadata?.['prompt_tokens'] || 
+                       this.lastTranslationUsageMetadata?.['input_tokens'] || 
+                       this.lastTranslationUsageMetadata?.['inputTokens']) as number | undefined,
+        candidatesTokens: (this.lastTranslationUsageMetadata?.['candidatesTokenCount'] || 
+                           this.lastTranslationUsageMetadata?.['completion_tokens'] || 
+                           this.lastTranslationUsageMetadata?.['output_tokens'] || 
+                           this.lastTranslationUsageMetadata?.['outputTokens']) as number | undefined
       }).catch(err => {
         console.error('Lỗi khi lưu lịch sử:', err);
         return undefined;

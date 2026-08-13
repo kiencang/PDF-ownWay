@@ -44,9 +44,9 @@ export class AiService {
 
   async countTokens(
     fileData: string, 
-    mimeType: string = 'text/plain', 
-    modelName: string = this.MODEL_NAME_DEFAULT,
-    pageCount: number = 1
+    mimeType = 'text/plain', 
+    modelName = this.MODEL_NAME_DEFAULT,
+    pageCount = 1
   ): Promise<number> {
     const apiKey = this.getApiKey();
     if (!apiKey) {
@@ -112,8 +112,8 @@ export class AiService {
         tokens = data['input_tokens'];
       } else if (typeof data['tokens'] === 'number') {
         tokens = data['tokens'];
-      } else if (data['usage'] && typeof (data['usage'] as any)['prompt_tokens'] === 'number') {
-        tokens = (data['usage'] as any)['prompt_tokens'];
+      } else if (data['usage'] && typeof (data['usage'] as Record<string, unknown>)['prompt_tokens'] === 'number') {
+        tokens = (data['usage'] as Record<string, unknown>)['prompt_tokens'] as number;
       } else if (data['input_token_count'] && typeof data['input_token_count'] === 'number') {
         tokens = data['input_token_count'];
       } else {
@@ -135,7 +135,8 @@ export class AiService {
   private async callMetaApi(
     systemInstruction: string,
     contentParts: ApiContentPart[],
-    modelName: string = this.MODEL_NAME_DEFAULT
+    modelName: string = this.MODEL_NAME_DEFAULT,
+    reasoningLevel: 'low' | 'medium' | 'high' = 'high'
   ): Promise<TranslationResult> {
     const openai = this.getOpenAIClient();
 
@@ -267,14 +268,17 @@ export class AiService {
       content: formattedParts
     });
 
-    const bodyPayload = {
+    const bodyPayload: Record<string, unknown> = {
       model: modelName || this.MODEL_NAME_DEFAULT,
       input: inputMessages,
       temperature: 1.0,
       top_p: 1.0,
-      max_output_tokens: 100000,
-      reasoning: { effort: 'high' }
+      max_output_tokens: 128000
     };
+
+    if (reasoningLevel) {
+      bodyPayload['reasoning'] = { effort: reasoningLevel };
+    }
 
     console.log('[Meta AI Responses Payload]:', bodyPayload);
 
@@ -308,9 +312,9 @@ export class AiService {
       if (typeof resData['output_text'] === 'string' && resData['output_text'].trim()) {
         textOutput = resData['output_text'];
       } else if (Array.isArray(resData['output']) && resData['output'].length > 0) {
-        const messageOutput = resData['output'].find((out: any) => out?.type === 'message' && out?.role === 'assistant');
-        if (messageOutput && Array.isArray(messageOutput.content)) {
-          textOutput = messageOutput.content.map((c: any) => c.text || c.val || c.content || '').join('');
+        const messageOutput = resData['output'].find((out: Record<string, unknown>) => out?.['type'] === 'message' && out?.['role'] === 'assistant');
+        if (messageOutput && Array.isArray(messageOutput['content'])) {
+          textOutput = messageOutput['content'].map((c: Record<string, unknown>) => c['text'] || c['val'] || c['content'] || '').join('');
         }
         
         if (!textOutput) {
@@ -445,7 +449,7 @@ Chỉ trả về mã HTML (được phép bao gồm thẻ <style> bên trong, kh
     const mime = dataUrl.split(';')[0].split(':')[1];
     const data = dataUrl.split(',')[1];
 
-    const parts: any[] = [
+    const parts: ApiContentPart[] = [
       {
         type: 'file_data',
         file_data: data,
@@ -472,9 +476,9 @@ QUY TẮC BẮT BUỘC TUÂN THỦ:
 5.  **ĐỊNH DẠNG ĐẦU RA:** Đảm bảo đầu ra là một chuỗi văn bản thuần túy (plain text string) duy nhất.`;
 
     const prompt = `Provide the single best English search query translation for the following Vietnamese query. Output ONLY the raw English text, nothing else: ${query}`;
-    const parts: any[] = [{ type: 'text', text: prompt }];
+    const parts: ApiContentPart[] = [{ type: 'text', text: prompt }];
 
-    const result = await this.callMetaApi(systemInstruction, parts, searchModel);
+    const result = await this.callMetaApi(systemInstruction, parts, searchModel, 'low');
     return (result.text || '').trim();
   }
 
