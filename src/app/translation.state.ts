@@ -133,7 +133,7 @@ export class TranslationState {
       this.croppedFile.set(result.croppedFile);
       this.fileBase64.set(result.fileBase64);
 
-      // Trích xuất văn bản thực sự từ PDF để đếm token bằng gpt-tokenizer
+      // Trích xuất văn bản thực sự từ PDF để đếm token
       let textForTokens = '';
       try {
         textForTokens = await this.pdfService.extractTextFromPDF(file, start, end);
