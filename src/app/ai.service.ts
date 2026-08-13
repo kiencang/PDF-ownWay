@@ -42,25 +42,50 @@ export class AiService {
     });
   }
 
-  async countTokens(fileData: string, modelName: string = this.MODEL_NAME_DEFAULT): Promise<number> {
+  async countTokens(
+    fileData: string, 
+    mimeType: string = 'text/plain', 
+    modelName: string = this.MODEL_NAME_DEFAULT,
+    pageCount: number = 1
+  ): Promise<number> {
     const apiKey = this.getApiKey();
     if (!apiKey) {
-      throw new Error('Chưa cấu hình API Key. Vui lòng cấu hình API Key trong phần Cài đặt.');
+      if (mimeType === 'application/pdf') {
+        return pageCount * 500;
+      }
+      return Math.ceil((fileData || '').length / 4);
     }
     
     try {
       const endpoint = 'https://api.meta.ai/v1/responses/input_tokens';
+      let contentPart: Record<string, unknown>;
+
+      if (mimeType === 'application/pdf') {
+        contentPart = {
+          type: 'input_file',
+          file_data: fileData,
+          mime_type: 'application/pdf'
+        };
+      } else if (mimeType.startsWith('image/')) {
+        contentPart = {
+          type: 'image_url',
+          image_url: {
+            url: fileData.startsWith('data:') ? fileData : `data:${mimeType};base64,${fileData}`
+          }
+        };
+      } else {
+        contentPart = {
+          type: 'input_text',
+          text: fileData || ' '
+        };
+      }
+
       const bodyPayload = {
         model: modelName,
         input: [
           {
             role: 'user',
-            content: [
-              {
-                type: 'input_text',
-                text: fileData || ' '
-              }
-            ]
+            content: [contentPart]
           }
         ]
       };
@@ -75,7 +100,10 @@ export class AiService {
       });
 
       if (!response.ok) {
-        throw new Error(`API Tokenizer phản hồi lỗi: Status ${response.status}`);
+        if (mimeType === 'application/pdf') {
+          return pageCount * 500;
+        }
+        return Math.ceil((fileData || '').length / 4);
       }
       
       const data = await response.json() as Record<string, unknown>;
@@ -89,12 +117,18 @@ export class AiService {
       } else if (data['input_token_count'] && typeof data['input_token_count'] === 'number') {
         tokens = data['input_token_count'];
       } else {
-        throw new Error('Không thể nhận dạng cấu trúc dữ liệu trả về từ API Tokenizer.');
+        if (mimeType === 'application/pdf') {
+          return pageCount * 500;
+        }
+        return Math.ceil((fileData || '').length / 4);
       }
       return tokens;
     } catch (e: unknown) {
-      console.error('[Meta AI countTokens error]:', e);
-      throw e;
+      console.warn('[Meta AI countTokens fallback]:', e);
+      if (mimeType === 'application/pdf') {
+        return pageCount * 500;
+      }
+      return Math.ceil((fileData || '').length / 4);
     }
   }
 

@@ -27,7 +27,7 @@ export class TranslationState {
   readonly MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
   readonly MAX_FILE_SIZE_HTML = 0.5 * 1024 * 1024; // 500KB
   readonly MAX_PDF_TOKENS = 25000;
-  readonly MAX_HTML_TOKENS = 25000;
+  readonly MAX_HTML_TOKENS = 35000;
 
   selectedModel = signal<string>('muse-spark-1.2');
   selectedFile = signal<File | null>(null);
@@ -133,36 +133,10 @@ export class TranslationState {
       this.croppedFile.set(result.croppedFile);
       this.fileBase64.set(result.fileBase64);
 
-      // Trích xuất văn bản thực sự từ PDF để đếm token
-      let textForTokens = '';
-      try {
-        textForTokens = await this.pdfService.extractTextFromPDF(file, start, end);
-      } catch (err) {
-        console.warn('Lỗi trích xuất chữ từ PDF:', err);
-      }
+      const pageCount = Math.max(1, end - start + 1);
 
-      if (textForTokens && textForTokens.trim().length > 0) {
-        await this.checkTokenLimit(textForTokens);
-      } else {
-        // Dự phòng cho Scanned PDF (file scan ảnh không có layer text): ~500 tokens / trang
-        const pageCount = Math.max(1, end - start + 1);
-        this.tokenCount.set(pageCount * 500);
-      }
-
-      // Extract images from the cropped PDF
-      try {
-        const hash = await this.pdfService.hashFile(result.croppedFile);
-        this.pdfHash.set(hash);
-        const extractedImages = await this.pdfService.extractImagesFromPDF(result.croppedFile, hash);
-        
-        // Save images to IndexedDB
-        await this.dbService.clearImagesByPdf(hash);
-        for (const img of extractedImages) {
-           await this.dbService.saveImage(img.id, hash, img.dataUrl);
-        }
-      } catch (err) {
-        console.warn('Lỗi khi trích xuất hình ảnh từ PDF:', err);
-      }
+      // Gửi trực tiếp Base64 của PDF lên API đếm token (không cần trích xuất text)
+      await this.checkTokenLimit(result.fileBase64, 'application/pdf', pageCount);
     } catch (error) {
       console.error('Error cropping PDF:', error);
       this.showToast('error', 'Lỗi khi cắt PDF.');
@@ -225,10 +199,10 @@ export class TranslationState {
     this.rawOriginalFileBlob.set(file);
   }
 
-  private async checkTokenLimit(textContent: string) {
+  private async checkTokenLimit(data: string, mimeType: string = 'text/plain', pageCount: number = 1) {
     this.isCountingTokens.set(true);
     try {
-      const tokens = await this.aiService.countTokens(textContent, this.selectedModel());
+      const tokens = await this.aiService.countTokens(data, mimeType, this.selectedModel(), pageCount);
       this.tokenCount.set(tokens);
       const maxTokens = this.currentMaxTokens();
       if (tokens > maxTokens) {
@@ -236,8 +210,12 @@ export class TranslationState {
         this.showToast('error', `Lỗi: Nội dung vượt quá giới hạn ${maxTokens / 1000}K tokens (${formattedK} tokens). Vui lòng giảm dung lượng.`);
       }
     } catch (e: unknown) {
-      const parsedError = this.aiService.parseError(e);
-      this.showToast('error', `Lỗi khi kiểm tra dung lượng tài liệu: ${parsedError}`);
+      console.warn('Lỗi khi đếm token, sử dụng ước tính:', e);
+      if (mimeType === 'application/pdf') {
+        this.tokenCount.set(pageCount * 500);
+      } else {
+        this.tokenCount.set(Math.ceil((data || '').length / 4));
+      }
     } finally {
       this.isCountingTokens.set(false);
     }
@@ -265,7 +243,21 @@ export class TranslationState {
       const currentMode = this.mode();
       
       let extractedImages: ExtractedImage[] = [];
-      if (this.pdfHash()) {
+      if (this.isPdfUploaded() && this.croppedFile()) {
+        this.progressMessage.set('Đang bóc tách hình ảnh từ PDF...');
+        try {
+          const cropped = this.croppedFile()!;
+          const hash = await this.pdfService.hashFile(cropped);
+          this.pdfHash.set(hash);
+          extractedImages = await this.pdfService.extractImagesFromPDF(cropped, hash);
+          await this.dbService.clearImagesByPdf(hash);
+          for (const img of extractedImages) {
+            await this.dbService.saveImage(img.id, hash, img.dataUrl);
+          }
+        } catch (e) {
+          console.warn('Lỗi khi bóc tách hình ảnh từ PDF:', e);
+        }
+      } else if (this.pdfHash()) {
         try {
           extractedImages = await this.dbService.getImagesByPdf(this.pdfHash()!);
         } catch (e) {

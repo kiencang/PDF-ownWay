@@ -241,7 +241,7 @@ export class App {
     if (this.cropTimeout) clearTimeout(this.cropTimeout);
     this.cropTimeout = setTimeout(() => {
       this.translationState.processPdfCrop();
-    }, 500);
+    }, 800);
   }
 
   processFile() {
