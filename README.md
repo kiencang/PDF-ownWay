@@ -3,7 +3,7 @@ Dịch file PDF *ngắn, chuyên ngành* từ tiếng Anh sang tiếng Việt b�
 
 Link: https://pdf-ownway.wpsila.com
 
-Ứng dụng cần API Key của Meta để chạy.
+Ứng dụng web không cần đăng nhập, tạo tài khoản. Chỉ cần nhập API Key của [Meta AI](https://dev.meta.ai/) là dùng được ngay. API Key được lưu cục bộ tại trình duyệt của người dùng, do vậy bạn chỉ nên dùng nó trên máy tính cá nhân của riêng bạn.
 
 Phiên bản dành cho Meta AI này được phát triển dựa trên phiên bản (1.0.88) dành riêng cho Gemini: https://github.com/kiencang/PDF-silaTranslator-Online
 
