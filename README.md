@@ -1,9 +1,11 @@
 # PDF-ownWay
-Dịch file PDF *ngắn, chuyên ngành* từ tiếng Anh sang tiếng Việt bằng Meta AI. Có khả năng giữ được ảnh &amp; công thức toán.
+Dịch file PDF *ngắn, chuyên ngành* từ tiếng Anh sang tiếng Việt bằng **Meta AI**. Có khả năng giữ được ảnh &amp; công thức toán.
 
 Link: https://pdf-ownway.wpsila.com
 
 Ứng dụng cần API Key của Meta để chạy.
+
+Phiên bản dành cho Meta AI này được phát triển dựa trên phiên bản (1.0.88) dành riêng cho Gemini: https://github.com/kiencang/PDF-silaTranslator-Online
 
 ## Tuyên bố từ chối trách nhiệm
 Công cụ này có thể được sử dụng cho mục đích nghiên cứu và học tập cá nhân.
