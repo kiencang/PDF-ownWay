@@ -1,0 +1,174 @@
+<div class="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 text-slate-900 font-sans">
+  <!-- Header -->
+  <app-header-controls 
+    [attr.inert]="showResetConfirm() ? true : null"
+    [isProcessing]="isProcessing()"
+    [selectedModel]="selectedModel()"
+    [hasUserApiKey]="userApiKey() !== ''"
+    (modelChange)="selectedModel.set($event)"
+    (openApiKeyModal)="openApiKeyModal()">
+  </app-header-controls>
+
+  <main class="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 py-8" [attr.inert]="showResetConfirm() || showHistoryModal() ? true : null">
+    <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
+      
+      <!-- Left Column: Controls & Upload -->
+      <div class="lg:col-span-4 space-y-6">
+        
+        <!-- Upload Section -->
+        <div class="block">
+          <app-upload-zone
+            [isProcessing]="isProcessing()"
+            [hasFile]="hasFile()"
+            [isHistoryView]="isLoadedFromHistory()"
+            [hasOriginalFile]="hasOriginalFile()"
+            [hasResult]="!!resultHtml()"
+            [selectedFile]="selectedFile()"
+            [pdfTotalPages]="pdfTotalPages()"
+            [pdfStartPage]="pdfStartPage()"
+            [pdfEndPage]="pdfEndPage()"
+            [tokenCount]="tokenCount()"
+            [isCountingTokens]="isCountingTokens()"
+            [currentMaxTokens]="currentMaxTokens()"
+            [tokenPercentage]="tokenPercentage()"
+            [error]="error()"
+            (fileChange)="onFileSelected($event)"
+            (pageChange)="pdfStartPage.set($event.start); pdfEndPage.set($event.end); onPageChange()"
+            (resetApp)="resetApp()"
+            (downloadOriginal)="downloadOriginalFile()"
+          ></app-upload-zone>
+        </div>
+
+        <!-- Configuration Section -->
+        <div class="block">
+          <app-config-section
+            [modeControl]="modeControl"
+            [isHtmlUploaded]="isHtmlUploaded()"
+            [isPdfUploaded]="isPdfUploaded()"
+            [isTwoPhaseMode]="isTwoPhaseMode()"
+            [isProcessing]="isProcessing()"
+            [canProcess]="canProcess()"
+            [hasResultHtml]="!!resultHtml()"
+            [progressMessage]="progressMessage()"
+            (openSettings)="openSettings()"
+            (processFile)="processFile()">
+          </app-config-section>
+        </div>
+      </div>
+
+      <!-- Right Column: Results -->
+      <div class="lg:col-span-8 lg:sticky lg:top-8 lg:h-[calc(100vh-4rem)]" [class.z-50]="isFullscreen()">
+        <app-result-section
+          [isFullscreen]="isFullscreen()"
+          [isProcessing]="isProcessing()"
+          [resultHtml]="resultHtml()"
+          [htmlContent]="resultHtml()"
+          [progressMessage]="progressMessage()"
+          [formattedTime]="formattedTime()"
+          [selectedModel]="selectedModel()"
+          [mode]="mode()"
+          (downloadHtml)="downloadHtml()"
+          (toggleFullscreen)="isFullscreen.set(!isFullscreen())">
+        </app-result-section>
+      </div>
+
+    </div>
+  </main>
+
+  <!-- Footer -->
+  <footer class="border-t border-slate-200 mt-8" [attr.inert]="showResetConfirm() || showHistoryModal() ? true : null">
+    <div class="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 py-4 flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 relative">
+      <!-- Left side: History Button -->
+      <div class="flex items-center justify-center lg:justify-start">
+        <button 
+          (click)="openHistory()" 
+          [disabled]="isProcessing()"
+          class="flex items-center gap-1.5 px-3 py-1 text-xs font-semibold rounded-lg border shadow-sm transition-all duration-150"
+          [class.cursor-not-allowed]="isProcessing()"
+          [class.cursor-pointer]="!isProcessing()"
+          [ngClass]="isProcessing() 
+            ? 'bg-slate-50 border-slate-200 text-slate-400' 
+            : 'bg-indigo-50 border-indigo-100 hover:bg-indigo-100 text-indigo-700 hover:text-indigo-800'">
+          <lucide-icon [img]="Clock" class="w-3.5 h-3.5"></lucide-icon>
+          Lịch sử dịch
+        </button>
+        <button
+          (click)="openApps()"
+          class="flex items-center gap-1.5 px-3 py-1 text-xs font-semibold rounded-lg border shadow-sm transition-all duration-150 cursor-pointer bg-indigo-50 border-indigo-100 hover:bg-indigo-100 text-indigo-700 hover:text-indigo-800 ml-2"
+          title="Khám phá các ứng dụng dịch thuật khác">
+          <lucide-icon [img]="LayoutGrid" class="w-3.5 h-3.5"></lucide-icon>
+          Các app khác
+        </button>
+      </div>
+
+      <!-- Right section -->
+      <div class="flex items-center justify-center lg:justify-end">
+        <p class="text-xs text-slate-500 flex flex-wrap items-center justify-center lg:justify-end gap-1.5 lg:whitespace-nowrap">
+          <span class="font-medium text-slate-600">v1.0.4</span>
+          <span class="text-slate-300 select-none">•</span>
+          <a href="https://github.com/kiencang/PDF-ownWay" target="_blank" rel="noopener noreferrer" class="text-indigo-600 hover:text-indigo-700 hover:underline font-medium transition-colors">
+            GitHub
+          </a>
+          <span class="text-slate-300 select-none">•</span>
+          <span class="font-medium text-slate-700">Nguyễn Đức Anh</span>
+          <span class="text-slate-300 select-none">•</span>
+          <a href="mailto:contact@wpsila.com" class="hover:text-indigo-600 hover:underline transition-colors">contact@wpsila.com</a>
+          <span class="text-slate-300 select-none">•</span>
+          <a href="https://github.com/kiencang/PDF-ownWay/blob/main/README.md" target="_blank" rel="noopener noreferrer" class="text-indigo-600 hover:text-indigo-700 hover:underline font-medium transition-colors">
+            Hướng dẫn dùng
+          </a>
+        </p>
+      </div>
+    </div>
+  </footer>
+
+  <!-- Toast Notifications -->
+  <app-toasts></app-toasts>
+
+  <!-- History Modal -->
+  @if (showHistoryModal()) {
+    <app-history-modal
+      [historyItems]="historyItems()"
+      [activeHistoryItemId]="activeHistoryItemId()"
+      (selectItem)="selectHistoryItem($event)"
+      (deleteItem)="deleteHistoryItem($event)"
+      (closeModal)="closeHistory()">
+    </app-history-modal>
+  }
+
+  <!-- Reset Confirmation Modal -->
+  @if (showResetConfirm()) {
+    <app-reset-confirm-modal
+      (confirm)="confirmReset()"
+      (cancelConfirm)="cancelReset()">
+    </app-reset-confirm-modal>
+  }
+
+  <!-- Settings Modal -->
+  @if (showSettingsModal()) {
+    <app-settings-modal 
+      [initialMode]="defaultModeControl.value"
+      (save)="onSettingsSave($event)"
+      (closeModal)="closeSettings()">
+    </app-settings-modal>
+  }
+
+  <!-- API Key Configuration Modal -->
+  @if (showApiKeyModal()) {
+    <app-api-key-modal
+      [initialApiKey]="userApiKey()"
+      [initialModel]="translationState.selectedModel()"
+      [hasUserApiKey]="userApiKey() !== ''"
+      (save)="saveApiKey($event)"
+      (clear)="clearApiKey()"
+      (closeModal)="closeApiKeyModal()">
+    </app-api-key-modal>
+  }
+
+  <!-- Apps Modal -->
+  @if (showAppsModal()) {
+    <app-apps-modal
+      (closeModal)="closeApps()">
+    </app-apps-modal>
+  }
+</div>
